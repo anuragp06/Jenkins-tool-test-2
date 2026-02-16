@@ -1,0 +1,59 @@
+name: deployApp
+description: Deploy Kubernetes deployment with specified image
+inputs:
+  environment:
+    description: Target environment
+    required: true
+  namespace:
+    description: Kubernetes namespace
+    required: true
+  deployment:
+    description: Kubernetes deployment name
+    required: true
+  container:
+    description: Container name in deployment
+    required: true
+  image:
+    description: Image URI to deploy
+    required: true
+  kubeconfigCredentialId:
+    description: Kubeconfig secret name
+    required: false
+    default: ""
+  rolloutTimeout:
+    description: Rollout status timeout
+    required: false
+    default: 180s
+runs:
+  using: composite
+  steps:
+    - name: Show deployment info
+      run: echo "Deploying ${{ inputs.deployment }} to ${{ inputs.environment }}/${{ inputs.namespace }} with image ${{ inputs.image }}"
+      shell: bash
+    - name: Set kubeconfig secret name
+      run: |
+      shell: bash
+        if [ -z "${{ inputs.kubeconfigCredentialId }}" ]; then
+          echo "KUBECONFIG_SECRET=kubeconfig-${{ inputs.environment }}" >> $GITHUB_ENV
+        else
+          echo "KUBECONFIG_SECRET=${{ inputs.kubeconfigCredentialId }}" >> $GITHUB_ENV
+        fi
+      shell: bash
+    - name: Download kubeconfig file
+      run: |
+      shell: bash
+        echo "Downloading kubeconfig secret $KUBECONFIG_SECRET"
+        kubectl get secret $KUBECONFIG_SECRET -o jsonpath='{.data.kubeconfig}' | base64 -d > kubeconfig
+      shell: bash
+    - name: Set image for deployment
+      run: |
+      shell: bash
+        export KUBECONFIG=$(pwd)/kubeconfig
+        kubectl -n ${{ inputs.namespace }} set image deployment/${{ inputs.deployment }} ${{ inputs.container }}=${{ inputs.image }}
+      shell: bash
+    - name: Rollout status
+      run: |
+      shell: bash
+        export KUBECONFIG=$(pwd)/kubeconfig
+        kubectl -n ${{ inputs.namespace }} rollout status deployment/${{ inputs.deployment }} --timeout=${{ inputs.rolloutTimeout }}
+      shell: bash

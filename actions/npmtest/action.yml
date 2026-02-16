@@ -1,0 +1,32 @@
+name: npmTest
+description: Run npm tests and optionally publish JUnit results
+inputs:
+  workspace:
+    description: Working directory to run tests
+    required: false
+    default: .
+  script:
+    description: NPM script to run
+    required: false
+    default: test
+  publishJunit:
+    description: Publish JUnit results
+    required: false
+    default: true
+  junitPattern:
+    description: JUnit results file pattern
+    required: false
+    default: '**/junit.xml'
+runs:
+  using: composite
+  steps:
+    - name: Run npm test
+      run: |
+      shell: bash
+        cd "${{ inputs.workspace }}"
+        npm run ${{ inputs.script }} -- --ci --reporters=default --reporters=jest-junit
+      shell: bash
+    - name: Publish JUnit results
+      if: ${{ inputs.publishJunit == 'true' }}
+      run: echo "Would publish JUnit results from pattern ${{ inputs.junitPattern }}"
+      shell: bash

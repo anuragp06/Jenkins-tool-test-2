@@ -1,0 +1,36 @@
+name: setupNode
+description: Set up Node.js and configure npm registry
+inputs:
+  nodeTool:
+    description: Node.js tool name to use
+    required: false
+    default: node-20
+  npmRegistry:
+    description: Optional npm registry URL
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Show node tool
+      run: echo "Using Node tool ${{ inputs.nodeTool }}"
+      shell: bash
+    - name: Add node to PATH
+      run: echo "Add your node tool to PATH here if needed"
+      shell: bash
+    - name: Show node version
+      run: node --version
+      shell: bash
+    - name: Show npm version
+      run: npm --version
+      shell: bash
+    - name: Set npm registry if provided
+      run: |
+      shell: bash
+        if [ -n "${{ inputs.npmRegistry }}" ]; then
+          npm config set registry ${{ inputs.npmRegistry }}
+          echo "Set npm registry to ${{ inputs.npmRegistry }}"
+        else
+          echo "No npm registry provided"
+        fi
+      shell: bash

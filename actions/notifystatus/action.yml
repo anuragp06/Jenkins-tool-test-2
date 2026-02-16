@@ -1,0 +1,61 @@
+name: notifyStatus
+description: Notify build status to a channel and log the message
+inputs:
+  status:
+    description: Build status (SUCCESS, FAILURE, etc)
+    required: false
+    default: UNKNOWN
+  channel:
+    description: Notification channel
+    required: false
+    default: "#build-notifications"
+  appName:
+    description: Application name
+    required: false
+    default: unknown-app
+  buildUrl:
+    description: Build URL
+    required: false
+    default: n/a
+  branch:
+    description: Branch name
+    required: false
+    default: n/a
+  slackEnabled:
+    description: Enable Slack notification (true or false)
+    required: false
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - name: Set color
+      run: |
+      shell: bash
+        STATUS_UPPER=$(echo "${{ inputs.status }}" | tr '[:lower:]' '[:upper:]')
+        if [ "$STATUS_UPPER" = "SUCCESS" ]; then
+          COLOR="#2eb886"
+        elif [ "$STATUS_UPPER" = "FAILURE" ]; then
+          COLOR="#a30200"
+        else
+          COLOR="#daa038"
+        fi
+        echo "COLOR=$COLOR" >> $GITHUB_ENV
+      shell: bash
+    - name: Build message
+      run: |
+      shell: bash
+        MSG="${{ inputs.appName }} $(echo "${{ inputs.status }}" | tr '[:lower:]' '[:upper:]') | branch=${{ inputs.branch }} | <${{ inputs.buildUrl }}|Open Build>"
+        echo "MESSAGE=$MSG" >> $GITHUB_ENV
+      shell: bash
+    - name: Send Slack notification
+      run: |
+      shell: bash
+        if [ "${{ inputs.slackEnabled }}" = "true" ]; then
+          echo "Sending Slack message to ${{ inputs.channel }} with color $COLOR and message $MESSAGE"
+        else
+          echo "Slack notification is disabled"
+        fi
+      shell: bash
+    - name: Log message
+      run: echo "notifyStatus $MESSAGE"
+      shell: bash

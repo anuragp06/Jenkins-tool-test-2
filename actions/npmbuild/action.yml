@@ -1,0 +1,37 @@
+name: npmBuild
+description: Run npm build script and optionally archive artifacts
+inputs:
+  script:
+    description: NPM script to run
+    required: false
+    default: build
+  workspace:
+    description: Working directory
+    required: false
+    default: .
+  archive:
+    description: Archive artifacts after build
+    required: false
+    default: true
+  artifacts:
+    description: Artifact glob pattern
+    required: false
+    default: dist/**
+runs:
+  using: composite
+  steps:
+    - name: Change to workspace
+      run: cd "${{ inputs.workspace }}"
+      shell: bash
+    - name: Run npm script
+      run: npm run ${{ inputs.script }}
+      shell: bash
+    - name: Archive artifacts
+      run: |
+      shell: bash
+        if [ "${{ inputs.archive }}" = "true" ]; then
+          echo "Would archive ${{ inputs.artifacts }}"
+        else
+          echo "Skipping archive"
+        fi
+      shell: bash
